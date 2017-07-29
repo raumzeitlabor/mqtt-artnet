@@ -117,7 +117,7 @@ def on_message(client, userdata, msg):
         artnet.send(IP, STATE)
 
     else:
-        print(f"Payload {msg.payload} is not recognized.")
+        print("Payload is not recognized.")
 
 
 
