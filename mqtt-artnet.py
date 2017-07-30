@@ -3,6 +3,7 @@
 import time
 import random
 import sys
+from multiprocessing import Process
 
 from sendartnet import sendArtNet
 
@@ -23,6 +24,7 @@ STROBES = [1]
 PARS = [10, 20]
 
 artnet = sendArtNet()
+STATE = list()
 
 ################################################################################
 # Methods manipulating DMX-Channels
@@ -30,7 +32,6 @@ artnet = sendArtNet()
 def initstate():
     """set initial state of dmx-array. Set all channels to zero and set default
     brightness."""
-    STATE = list()
     for i in range(1, 513):
         STATE.append((i, 0))
     # set initial brightnes for PARS
@@ -79,24 +80,14 @@ def random_rgb():
 
 def blackout():
     """blackout all channels instantly."""
-    initstate()
+
+    for i in range(1, 513):
+        STATE[i-1] = (i, 0)
+    for addr in PARS:
+        STATE[addr-1] = (addr, LUM)
+    artnet.send(IP, STATE)
 
 
-def fadeout(speed=SPEED):
-    """fade out all channels."""
-    flag = False
-    for par in PARS:
-        for i in range(0, 2): # Check all three channels (rgb)
-            if STATE[par + i - 1][1] > 0:
-                STATE[par + i -1] = (par, STATE[par + i - 1][1]-1)
-                flag = True
-
-    if flag == True: # at least one value has been changed
-        artnet.send(IP, STATE)
-        time.sleep(speed)
-        fadeout()
-    else:
-        return
 
 ###############################################################################
 # mqtt-interface
@@ -109,26 +100,29 @@ def on_message(client, userdata, msg):
     if msg.payload == b'random':
         random_rgb()
 
+    elif msg.payload == b'cycle-random':
+        blackout()
+
     elif msg.payload == b'red':
-        fadeout()
+        blackout()
         for par in PARS:
             fadeup(par+1)
             time.sleep(0.1)
 
     elif msg.payload == b'green':
-        fadeout()
+        blackout()
         for par in PARS:
             fadeup(par+2)
             time.sleep(0.1)
 
     elif msg.payload == b'blue':
-        fadeout()
+        blackout()
         for par in PARS:
             fadeup(par+3)
             time.sleep(0.1)
 
     elif msg.payload == b'yellow':
-        fadeout()
+        blackout()
         for par in PARS:
             fadeup(par+1)
             time.sleep(0.1)
@@ -136,7 +130,7 @@ def on_message(client, userdata, msg):
             time.sleep(0.1)
 
     elif msg.payload == b'purple':
-        fadeout()
+        blackout()
         for par in PARS:
             fadeup(par+1)
             time.sleep(0.1)
@@ -145,9 +139,6 @@ def on_message(client, userdata, msg):
 
     elif msg.payload == b'blackout':
         blackout()
-
-    elif msg.payload == b'fadeout':
-        fadeout()
 
     else:
         print("Payload is not recognized.")
