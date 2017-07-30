@@ -9,7 +9,7 @@ from sendartnet import sendArtNet
 import paho.mqtt.client as mqtt
 
 # MQTT-Config
-MQTT_TOPIC = "test" # The Topic on the MQTT Broker to subscribe to
+MQTT_TOPIC = "artnet" # The Topic on the MQTT Broker to subscribe to
 MQTT_HOST = "infra.rzl"
 MQTT_PORT = 1883
 
