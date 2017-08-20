@@ -10,13 +10,14 @@ from sendartnet import sendArtNet
 import paho.mqtt.client as mqtt
 
 # MQTT-Config
-MQTT_TOPIC = "artnet" # The Topic on the MQTT Broker to subscribe to
+MQTT_SUBSCRIBE = "/artnet/push" # The Topic on the MQTT Broker to subscribe to
+MQTT_STATE = "/artnet/state" # The Topic on the MQTT Broker to push to
 MQTT_HOST = "infra.rzl"
 MQTT_PORT = 1883
 
 # ARTNET-Config
 IP = "172.22.36.117" # Target-IP of ArtNetNode
-SPEED = 0.01   # default Speed on how fast to ramp things up and down
+SPEED = 0.0001  # default Speed on how fast to ramp things up and down
 LUM = 40       # default brightness
 
 # starting addresses of connected lights
@@ -94,34 +95,44 @@ def blackout():
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
-    client.subscribe(MQTT_TOPIC)
+    client.subscribe(MQTT_SUBSCRIBE)
 
 def on_message(client, userdata, msg):
+    print(msg.payload)
     if msg.payload == b'random':
+        client.publish(MQTT_STATE, payload="random", retain=True)
         random_rgb()
 
     elif msg.payload == b'cycle-random':
+        client.publish(MQTT_STATE, payload="cycle-random", retain=True)
         blackout()
+        for par in PARS:
+            fadeup(par+7, 10)
+            time.sleep(0.1)
 
     elif msg.payload == b'red':
         blackout()
+        client.publish(MQTT_STATE, payload="red", retain=True)
         for par in PARS:
             fadeup(par+1)
             time.sleep(0.1)
 
     elif msg.payload == b'green':
+        client.publish(MQTT_STATE, payload="green", retain=True)
         blackout()
         for par in PARS:
             fadeup(par+2)
             time.sleep(0.1)
 
     elif msg.payload == b'blue':
+        client.publish(MQTT_STATE, payload="blue", retain=True)
         blackout()
         for par in PARS:
             fadeup(par+3)
             time.sleep(0.1)
 
     elif msg.payload == b'yellow':
+        client.publish(MQTT_STATE, payload="yellow", retain=True)
         blackout()
         for par in PARS:
             fadeup(par+1)
@@ -130,6 +141,7 @@ def on_message(client, userdata, msg):
             time.sleep(0.1)
 
     elif msg.payload == b'purple':
+        client.publish(MQTT_STATE, payload="purple", retain=True)
         blackout()
         for par in PARS:
             fadeup(par+1)
@@ -139,9 +151,11 @@ def on_message(client, userdata, msg):
 
     elif msg.payload == b'blackout':
         blackout()
+        client.publish(MQTT_STATE, payload="blackout", retain=True)
 
     else:
         print("Payload is not recognized.")
+        client.publish(MQTT_STATE, payload="error", retain=True)
 
 
 if __name__ == "__main__":
